@@ -5,7 +5,6 @@ import sqlite3
 import sys
 import urllib
 import json
-import phash
 import time
 from progressbar import Bar, Counter, ETA, Percentage, ProgressBar
 from datetime import datetime as dt

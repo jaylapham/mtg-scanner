@@ -5,11 +5,13 @@ import cv2
 import math
 import json
 import sys
-import phash
 import operator
 import signal
 import base64
+import itertools
+from PIL import Image
 
+import imagehash
 from debugger import MTG_Debugger
 from mtgexception import MTGException
 from transformer import MTG_Transformer
@@ -112,19 +114,21 @@ class MTG_Scanner:
 
         # The phash python bindings operate on files, so we have to write our
         # current frame to a file to continue
+        print ("detecting card...")
         cv2.imwrite('frame.jpg', self.frame)
 
         # Use phash on our frame
-        ihash = phash.dct_imagehash('frame.jpg')
-        idigest = phash.image_digest('frame.jpg')
+        ihash = imagehash.phash(Image.open('frame.jpg'))
 
         candidates = {}
         hashes = self.referencedb.get_hashes()
+
         for MultiverseID in hashes:
             if (MultiverseID in self.blacklist):
                 continue
 
-            hamd = phash.hamming_distance(ihash, int(hashes[MultiverseID]))
+            hamd = ihash - imagehash.hex_to_hash(hashes[MultiverseID])
+            #hamd = sum(itertools.imap(str.__ne__, (ihash), hashes[MultiverseID]))
             if (hamd <= self.threshold):
                 candidates[MultiverseID] = hamd
 
@@ -142,18 +146,19 @@ class MTG_Scanner:
         correlations = {}
         for MultiverseID in finalists:
             hamd = candidates[MultiverseID]
-            digest = phash.image_digest(
-                self.referencedb.IMAGE_FILE % MultiverseID)
-            corr = phash.cross_correlation(idigest, digest)
-            if (bestMatch is None or corr > correlations[bestMatch]):
+            hash = imagehash.phash(Image.open(self.referencedb.IMAGE_FILE % MultiverseID))
+            corr = ihash.__sub__(hash)
+            if (bestMatch is None or corr < correlations[bestMatch]):
                 bestMatch = MultiverseID
             correlations[MultiverseID] = corr
 
         return bestMatch
 
     def handleKey(self, key, frame):
+        #if (key != 255):
+            #print ("keypress: %s", (key))
         if (self.detected_card is None):
-            if (key == 8 or key == 27):
+            if (key == 8 or key == 27 or key == 32):
                 self.bApplyTransforms = not self.bApplyTransforms
             elif (key == ord('d')):
                 self.debugger.toggle()
@@ -163,7 +168,7 @@ class MTG_Scanner:
                     self.detected_card = cv2.imread(
                         self.referencedb.IMAGE_FILE % self.detected_id,
                         cv2.IMREAD_UNCHANGED)
-            elif (key == 10):
+            elif (key == 13):
                 if (not self.bApplyTransforms):
                     self.bApplyTransforms = True
                 else:
@@ -192,7 +197,7 @@ class MTG_Scanner:
                 self.detected_id = None
                 self.bApplyTransforms = False
                 cv2.destroyWindow('Detected Card')
-            if (key == 10 or key == ord('y')):
+            if (key == 13 or key == ord('y')):
                 self.blacklist = []
                 self.storagedb.add_card(self.detected_id, 0)
                 name, code = self.referencedb.get_card_info(self.detected_id)
@@ -212,7 +217,7 @@ class MTG_Scanner:
                 self.detected_id = None
                 self.bApplyTransforms = False
                 cv2.destroyWindow('Detected Card')
-            elif (key == 8 or key == 27):
+            elif (key == 8 or key == 27 or key == 32):
                 self.blacklist = []
                 self.detected_card = None
                 self.detected_id = None

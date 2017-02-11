@@ -123,16 +123,15 @@ class MTG_Scanner:
 
         if (self.options.export):
             cards = self.storagedb.get_all()
+            print('Name,Edition,Quantity,Foil')
             for card in cards:
                 try:
                     cardinfo = self.referencedb.get_card_info(card[0])
                     foil = ''
                     if (card[1] == 1):
                         foil = ' *F*'
-                    print(
-                        str(card[2]) + 'x ' +
-                        str(cardinfo[0].encode('utf8')) +
-                        ' [' + str(cardinfo[1]) + ']' + foil)
+                    print('"' + str(cardinfo[0].encode('utf8')) + '",' +
+                        str(cardinfo[1]) + ',' + str(card[2]) + ',' + str(card[1] == 1))
                 except MTGException:
                     print('Error looking up card: ' + str(card[0]), file=sys.stderr)
 

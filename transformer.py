@@ -3,7 +3,6 @@ import cv2
 import math
 import json
 import sys
-import phash
 import operator
 import signal
 import base64
@@ -114,7 +113,7 @@ class MTG_Transformer:
             self.__draw_line
         )
 
-        return lines[0]
+        return lines
 
     def __find_ortho_lines(self, lines, frame):
         """Find all the orthogonal lines. Orthogonal lines are lines that fall
@@ -123,7 +122,8 @@ class MTG_Transformer:
 
         vert_lines = []
         horz_lines = []
-        for rho, theta in lines:
+        for line in lines:
+            rho, theta = line[0]
             dtheta = math.degrees(theta)
             if (
                 (dtheta % 180 < self.angle_threshold) or
@@ -137,7 +137,7 @@ class MTG_Transformer:
                 horz_lines.append([rho, theta])
 
         # Assemble debugging frame
-        def dfunc(frame, vert_line, horz_line, drawline):
+        def dfunc2(frame, vert_line, horz_line, drawline):
             for rho, theta in vert_lines:
                 drawline(frame, rho, theta, (0, 0, 255))
             for rho, theta in horz_lines:
@@ -147,7 +147,7 @@ class MTG_Transformer:
         self.debugger.addFrame(
             'Ortho Lines',
             frame.copy(),
-            dfunc,
+            dfunc2,
             vert_lines,
             horz_lines,
             self.__draw_line
@@ -194,7 +194,7 @@ class MTG_Transformer:
             raise MTGException('Unable to calculate framing lines')
 
         # Assemble debugging frame
-        def dfunc(frame, min_vert, min_horz, drawline):
+        def dfunc3(frame, min_vert, min_horz, drawline):
             drawline(frame, min_horz[0], min_horz[1], (0, 255, 0))
             drawline(frame, max_horz[0], max_horz[1], (0, 255, 0))
             drawline(frame, min_vert[0], min_vert[1], (0, 0, 255))
@@ -204,7 +204,7 @@ class MTG_Transformer:
         self.debugger.addFrame(
             'Framing',
             frame.copy(),
-            dfunc,
+            dfunc3,
             min_vert,
             min_horz,
             self.__draw_line

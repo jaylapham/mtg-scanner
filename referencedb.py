@@ -5,10 +5,11 @@ import sqlite3
 import sys
 import urllib
 import json
-import phash
 import time
+import imagehash
 from progressbar import Bar, Counter, ETA, Percentage, ProgressBar
 from datetime import datetime as dt
+from PIL import Image
 
 from mtgexception import MTGException
 
@@ -212,7 +213,7 @@ class MTG_Reference_DB:
                     cursor.execute("""SELECT * FROM Hashes WHERE
                         MultiverseID = ?""", (MultiverseID,))
                     if (cursor.fetchone() is None):
-                        ihash = phash.dct_imagehash(path)
+                        ihash = imagehash.phash(Image.open(path))
                         cursor.execute(
                             """INSERT INTO Hashes
                             (MultiverseID, Hash) VALUES(?, ?)""",
@@ -255,6 +256,25 @@ class MTG_Reference_DB:
                 raise MTGException('No such card')
 
             return r[0], r[1]
+        except sqlite3.Error, e:
+            self.connection.rollback()
+            print("Error %s:" % e.args[0])
+            sys.exit(1)
+            
+    def get_card_info_and_foil(self, MultiverseID):
+        """Get the name and set code for a single card including foil boolean
+        """
+
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("""SELECT C.Name, S.Code, C.Foil FROM Cards C
+                LEFT JOIN Sets S on S.ID = C.SetID
+                WHERE C.MultiverseID = ?""", (MultiverseID,))
+            r = cursor.fetchone()
+            if (r is None):
+                raise MTGException('No such card')
+
+            return r[0], r[1], r[2]
         except sqlite3.Error, e:
             self.connection.rollback()
             print("Error %s:" % e.args[0])

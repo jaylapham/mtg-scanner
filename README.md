@@ -1,14 +1,45 @@
 # mtg-scanner
 
-Simple scanner for mtg. Mostly a project to get better with python and opencv 
-while providing a way to keep track of my MTG collection.  
+Simple scanner for Magic: The Gathering. A fork of original work by bitdagger / Matt Fields.
+The old README survives in the bottom of this file, as its documentation on the use of this 
+program is still accurate and useful.  
 
-## Dependencies  
-* python2  
-* opencv  
-* libphash  
-* phash python bindings  
-* imagemagick  
+## Notice
+This project does not contain any code, images, or any other type of data proprietary to  
+Wizards of the Coast or any affiliated entity. This program is likewise not affiliated in  
+any way with Wizards of the Coast. This program, when using running --update, will poll  
+Gatherer to download the requested card images as specified by the configured sets (see below).  
+There is no product, only code here. Keep it that way.
+
+## Installation
+So, full disclosure, I don't remember setting this up the first time. I do recommend getting  
+and using Anaconda (the python 2.7 version) as it should come with the necessary opencv and  
+imagehash libraries: https://www.continuum.io/downloads
+
+If you do go through installation and feel like taking note of what other steps, or contact me  
+if you get stuck, I can update this section.
+
+## Configuration
+The Gatherer pull will only include cards from the 'core' and 'expansion' type sets by default.  
+This is configured in referencedb.py, in a conditional when retrieving set lists. You could, for  
+example, add 'duel deck' to the conditional to also download dual deck set lists, but you'll get  
+more dupes in the actual matching phase when using the tool.
+
+## Use notes
+If you're scanning that exist in multiple sets but have the same image, it will very likely find both,  
+but match on whichever comes first. If you care about which set a card comes from, be aware of this  
+since the output csv file will have the set you selected for the given card.
+
+## Modifications
+This project contains a number of modifications to bitdagger's original work:
+* switch to use imagehash instead of phash. I wasn't able to get phash to work nor could I be  
+arsed to compile it from source, so I replaced it. The algorithm could probably be better.
+* fix a for loop that had some broken syntax (not sure if this was a python version issue)  
+* changed some of the keycodes because they were busted or different - these are still hardcoded  
+* fixed an issue with foil data not being exported
+* swapped export to be in deckbox-compatible csv format
+
+# Original README
 
 ## Operation  
 
